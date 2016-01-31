@@ -27,3 +27,17 @@ class Puzzle:
             new[v]=old[i]
             out.append(tuple(new))
         return out
+
+#make bugsy happen
+def bugsy(puzzle, successors, u):
+
+    return path
+
+def u(g, d):
+    utility = something here ****
+    return utility
+
+#test cases
+start_state = (0, 1, 2, 3, 5, 6, 7, 4, 9, 10, 11, 8, 13, 14, 15, 12)
+new_puz = Puzzle(start_state)
+print bugsy(new_puz, new_puz.next_states, u)
