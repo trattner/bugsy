@@ -1,4 +1,4 @@
-
+#for leslie kaelbling bling bling
 w_t = 2
 w_f = 3
 #Weight of time and solution cost
