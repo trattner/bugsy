@@ -102,11 +102,11 @@ Bugsy(initial, u(·))
 def bugsy(puzzle, u_func):
 
     if puzzle.initial_state == puzzle.goal_state:
-        closed.append(n)
         return puzzle.initial_state
+    closed = []
+    closed.append(puzzle.initial_state)
     open = []
     open.append(puzzle.initial_state)
-    closed = []
     expansion_count = 0
     while not open.isEmpty():
         utilities = []
