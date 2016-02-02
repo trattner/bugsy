@@ -1,4 +1,5 @@
 #for leslie kaelbling bling bling
+#Michael and Andy
 w_t = 2
 w_f = 3
 #Weight of time and solution cost
@@ -45,7 +46,7 @@ class Puzzle:
             '''
             validswaps.append(v3)
 
-        if v4 <= 15 and v4 % 4 > i % 4:
+        if v4 % 4 > i % 4:
             '''
             WORKING CASE:
             10(i) mod 4 returns 2
@@ -54,9 +55,7 @@ class Puzzle:
             This would be a valid swap
 
             FAILURE CASE:
-            1. 16(v4) is not less than current_state length
-
-            2. 11(i) mod 4 returns 3
+            1. 11(i) mod 4 returns 3
                12(v4) mod 4 returns 0
                So if the empty space is in position 11
                This would not be a valid swap
@@ -84,7 +83,7 @@ class Puzzle:
 BUGSY Pseudo code:
 
 Bugsy(initial, u(·))
-1. open ← {initial}, closed ← {}
+1. open ← {initial}, closed ← {} //open is list of nodes to expand. //closed is list of nodes already visited.
 2. do
 3.      n ← remove node from open with highest u(n) value
 4.      if n is a goal, return it
@@ -100,15 +99,19 @@ Bugsy(initial, u(·))
 
 '''
 def bugsy(puzzle, u_func):
-
+'''
+for later: be complicated...A search function which takes input Utility, Problem Instance (with initial state, goal state, and successor function)
+for now: be simple: 15 puzzle instance (goal, initial, next_states), Utility func, g* calculated by graph distance bt states
+'''
     if puzzle.initial_state == puzzle.goal_state:
         return puzzle.initial_state
+
     closed = []
-    closed.append(puzzle.initial_state)
-    open = []
-    open.append(puzzle.initial_state)
+    open = [puzzle.initial_state]
+
     expansion_count = 0
     while not open.isEmpty():
+        #finds utility of each node on every iteration
         utilities = []
         for node in open:
             utilities.append(u_func(node))
