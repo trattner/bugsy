@@ -1,8 +1,11 @@
 #for leslie kaelbling bling bling
 #Michael and Andy
-w_t = 2
-w_f = 3
+w_t = 9
+w_f = 9
 #Weight of time and solution cost
+import time
+import heapq
+from math import log
 class Puzzle:
     def __init__(self, starting_state):
         self.goal_state=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0)
@@ -79,75 +82,64 @@ class Puzzle:
         return next_states
 
 #make bugsy happen
-'''
-BUGSY Pseudo code:
 
-Bugsy(initial, u(·))
-1. open ← {initial}, closed ← {} //open is list of nodes to expand. //closed is list of nodes already visited.
-2. do
-3.      n ← remove node from open with highest u(n) value
-4.      if n is a goal, return it
-5.      add n to closed
-6.      for each of n('parent')’s children c('child'),
-7.          if c is not a goal and u(c) < 0 or an old version of c is in open or closed
-8.              skip c
-9.          else add c to open
-10.     if the expansion count is a power of two
-11.         re-compute u(n) for all nodes on the open list using the most recent estimates
-12.         re-heapify the open list
-13.loop to step 3
-
-'''
-def bugsy(puzzle, u_func):
-'''
-for later: be complicated...A search function which takes input Utility, Problem Instance (with initial state, goal state, and successor function)
-for now: be simple: 15 puzzle instance (goal, initial, next_states), Utility func, g* calculated by graph distance bt states
-'''
-    if puzzle.initial_state == puzzle.goal_state:
-        return puzzle.initial_state
+def bugsy(puzzle, u):
+    '''
+    for later: be complicated...A search function which takes input Utility, Problem Instance (with initial state, goal state, and successor function)
+    for now: be simple: 15 puzzle instance (goal, initial, next_states), Utility func, g* calculated by graph distance bt states
+    '''
 
     closed = []
-    open = [puzzle.initial_state]
-
+    frontier = [(-5, puzzle.initial_state, [])]
+    #States are composed of (current state - tuple, parent state - tuple, cost - int)
+    #State: tuple - (cost, current, parent)
     expansion_count = 0
-    while not open.isEmpty():
+    start_time = time.time()
+    while len(frontier) > 0:
         #finds utility of each node on every iteration
-        utilities = []
-        for node in open:
-            utilities.append(u_func(node))
-        max_util_pos = utilities.indexof(max(utilities))
-        parent = open.pop(max_util_pos)
-        if puzzle.goal_state == parent:
-            closed.append(parent)
-            return parent
-        for child in puzzle.next_states(parent):
-            if child is not puzzle.goal_state and u_func(child) < 0:
-                pass
-            if child in closed or child in open:
+        current = heapq.heappop(frontier)
+        if puzzle.goal_state == current[1]:
+            return current[2]
+        closed.append(current)
+        for next in puzzle.next_states(current[1]):
+            parent_path = current[2][:]
+            parent_path.append(current[1])
+            #use placeholder child node in util to avoid self-reference
+            child = (u(start_time, w_t, w_f, g, (0,(),parent_path)), next, parent_path)
+            if child[1] is puzzle.goal_state:
+                heapq.heappush(frontier,child)
+            elif u(start_time, w_t, w_f, g, child) > 0 or (child in closed or child in frontier):
                 pass
             else:
                 expansion_count += 1
-                open.append(child)
+                heapq.heappush(frontier,child)
+        if expansion_count > 5:
+            if type(log(expansion_count, 2)) is int:
+                '''
+                for i in range(len(frontier)):
+                    frontier[i][0] = u(start_time, w_t, w_f, g, frontier[i][0])
+                '''
+                frontier = [(u(start_time, w_t, w_f, g, frontier[i][1]), frontier[i][1], frontier[i][2]) for i in range(len(frontier))]
+                #rereates the whole frontier with the tuples
+                heapq.heapify(frontier)
+    return 'while ended'
 
-        if expansion_count % 2 == 0:
-            '''
-            utilities = []
-            for node in open:
-                utilities.append(u_func(node))
-            pass
-            '''
 
 
-
-
-def u(node):
+def u(starting_time, w_t, w_f, g, node):
     '''
     utility = something here ****
     Involving w_t and w_f
     '''
+    t = time.time() - starting_time
+    utility = -1 * (w_f * g(node) + w_t * t)
     return utility
+
+def g(node):
+    if type(node) is not None:
+        return len(node[2])
 
 #test cases
 start_state = (0, 1, 2, 3, 5, 6, 7, 4, 9, 10, 11, 8, 13, 14, 15, 12)
 new_puz = Puzzle(start_state)
-print bugsy(new_puz, new_puz.next_states, u)
+print bugsy(new_puz, u)
