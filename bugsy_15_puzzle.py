@@ -1,12 +1,17 @@
 #for leslie kaelbling bling bling
 #Michael and Andy
-w_t = 9
-w_f = 9
+
 #Weight of time and solution cost
 import time
 import heapq
 from math import log
+import sys
+
 class Puzzle:
+    """
+    A 15-puzzle instance which takes input startin_state as a well-formed typle of 16 entries
+    method next_states returns successors, goal_state is proper termination state
+    """
     def __init__(self, starting_state):
         self.goal_state=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0)
         #State '0' represents the empty slot in the puzzle
@@ -83,24 +88,27 @@ class Puzzle:
 
 #make bugsy happen
 
-def bugsy(puzzle, u, goal_state_d):
+def bugsy(puzzle, u, g, w_t, w_f):
     '''
-    for later: be complicated...A search function which takes input Utility, Problem Instance (with initial state, goal state, and successor function)
-    for now: be simple: 15 puzzle instance (goal, initial, next_states), Utility func, g* calculated by graph distance bt states
+    Search function based on utility, a linear combination of estimated time to find goal and cost of path
+    inputs 15-Puzzle instance, utility function, cost function g*, utility weights
+    outputs a maximum utility path if one exists, else returns false
     '''
     start_time = time.time()
     closed = []
-    frontier = [(-5, puzzle.initial_state, [], start_time)]
-    #States are composed of (current state - tuple, parent state - tuple, cost - int)
-    #State: tuple - (cost, current, parent)
+    frontier = [(-sys.maxint, puzzle.initial_state, ['start'], start_time)]
+    #States are composed of (utility, current state - tuple, parent path - list, t_instantiated)
+
     expansion_count = 0
     delay = 0
     total_delay_time = 0
     total_exp_time = 0
     t_exp = 0
-
+    
+    #goal state dictionary allows for quick lookup for Manhattan Dist Calc
+    goal_state_dictionary = convert_to_tuples(puzzle.goal_state)
+    
     while len(frontier) > 0:
-        #finds utility of each node on every iteration
         current = heapq.heappop(frontier)
         if puzzle.goal_state == current[1]:
             return current[2]
@@ -109,32 +117,34 @@ def bugsy(puzzle, u, goal_state_d):
             delay  += total_delay_time / expansion_count
         #calc exp time
         t_exp_1 = time.time()
-        for next in puzzle.next_states(current[1]):
+        for state in puzzle.next_states(current[1]):
             parent_path = current[2][:]
             parent_path.append(current[1])
-            #use placeholder child node in util to avoid self-reference
-            child = (u(start_time, w_t, w_f, g, (0,(),parent_path)), next, parent_path)
+            util = u(delay, t_exp, w_t, w_f, g, parent_path, goal_state_dictionary)
+            child = (util, state, parent_path, time.time())
             if child[1] is puzzle.goal_state:
                 heapq.heappush(frontier,child)
-            elif u(start_time, w_t, w_f, g, child) > 0 or (child in closed or child in frontier):
+            elif child in closed or child in frontier:
                 pass
+            #implement condition on util
             else:
                 expansion_count += 1
-                heapq.heappush(frontier,child)
+                heapq.heappush(frontier, child)
         total_exp_time+=time.time()-t_exp_1
         t_exp = total_exp_time/expansion_count
-        frontier = find_uhat(frontier, expansion_count)
-    return 'while ended'
+        frontier = find_uhat(frontier, expansion_count, u, delay, t_exp, w_t, w_f, g)
+        print frontier
+    return False
 
 def convert_to_tuples(state):
     output = {}
-    for i in range(len(state)):
-        x = i % 4
-        w = int(i / 4)
-        output[start[i]] = (x, w)
+    for i in range(1, len(state)+1):
+        x = (i-1) % 4
+        w = int((i-1) / 4)
+        output[state[i-1]] = (x, w)
     return output
 
-def u(delay, t_exp, w_t, w_f, g, node):
+def u(delay, t_exp, w_t, w_f, g, node, goal_state_dictionary):
     '''
     utility = something here ****
     Involving w_t and w_f
@@ -150,51 +160,37 @@ def u(delay, t_exp, w_t, w_f, g, node):
     Calculate d:
         -Loop and use the difference between the index of each number
         -in current state and the index of those same numbers in goal state
-
-
     '''
-    '''
-
-
-
-    '''
-    utility = -1 * (w_f * g(node) + w_t * delay * t_exp)
+    utility = -1 * (w_f * g(node) + w_t * man_dist(node[1],goal_state_dictionary) * delay * t_exp)
     return utility
 
 def g(node):
-    if type(node) is not None:
-        return len(node[2])
-
-goal_state_dict = convert_to_tuples(puzzle.goal_state)
+    return len(node)
 
 def man_dist(puzzle_state, goal_state_dict):
     dict_puzzle = convert_to_tuples(puzzle_state)
     d = 0
-    for i in xrange(1, len(goal_state_dict) + 1):
+    for i in xrange(1, len(goal_state_dict)):
         dx = abs(dict_puzzle[i][0] - goal_state_dict[i][0])
         dw = abs(dict_puzzle[i][1] - goal_state_dict[i][1])
         d += (dx + dw)
     return d
 
-def find_uhat(frontier, count, u):
-    if type(log(expansion_count, 2)) is int:
+def find_uhat(frontier, count, u, delay, t_exp, w_t, w_f, g):
+    if type(log(count, 2)) is int:
         new_frontier = []
         for node in frontier:
-            delay =
             util = u(delay, t_exp, w_t, w_f, g, node)
-            new_frontier.append([])
+            new_frontier.append((util, node[1], node[2], node[3]))
         return heapq.heapify(new_frontier)
     else:
         return frontier
 
 
 #test cases
+w_t = 9
+w_f = 9
 start_state = (0, 1, 2, 3, 5, 6, 7, 4, 9, 10, 11, 8, 13, 14, 15, 12)
 new_puz = Puzzle(start_state)
-print bugsy(new_puz, u)
-
-
-
-
-
-
+goal_state_dict = convert_to_tuples(new_puz.goal_state)
+print bugsy(new_puz, u, g, w_t, w_f)
