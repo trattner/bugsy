@@ -1,0 +1,25 @@
+\documentclass[a4paper]{article}
+\usepackage{setspace}
+\usepackage{amsmath}
+
+\begin{document}
+\onehalfspacing
+\begin{center}
+\textbf{Bugsy}\\
+\textit{Michael and Andy}\\
+\end{center}
+\vspace{0.15in}
+
+\section{Goal}
+\section{Modules}
+\subsection*{Bugsy}
+
+Bugsy uses a utility function \begin{align*}
+\hat{U} = -\big( w_f \cdot g^* (s) + w_t \cdot d \cdot delay \cdot t_{exp} \big)
+\end{align*}
+to prioritize its search, where $w_f, \ w_t$ are weights assigned by the user, $g^*$ is the cost function of the current state's path, $d$ is a distance metric, $delay$ is the estimated time between instantiation and expansion, and $t_{exp}$ is the estimated time to expand a node.
+
+The utilities of all states in the exploration space are updated and re-ordered after a power of two expansion count has been reached, otherwise the last re-ordering is used to pop off a heap.
+
+The key is understanding how the utility function helps the search is dynamic programming.
+\end{document}

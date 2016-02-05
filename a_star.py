@@ -1,3 +1,9 @@
+#Problem Set 
+#Name: Andrew Trattner
+#Collaborators: none
+#Time Spent: 0:
+
+
 #for leslie kaelbling bling bling
 #Michael and Andy
 
@@ -86,57 +92,46 @@ class Puzzle:
             next_states.append(tuple(new))
         return next_states
 
-#make bugsy happen
+#make a*
 
-def bugsy(puzzle, u, g, w_t, w_f):
-    '''
-    Search function based on utility, a linear combination of estimated time to find goal and cost of path
-    inputs 15-Puzzle instance, utility function, cost function g*, utility weights
-    outputs a maximum utility path if one exists, else returns false
-    '''
-    start_time = time.time()
+def a_star(puzzle):
+
+    index_state = 1
+    index_parent_path = 2
+    index_cost = 0
+
     closed = []
-    Uhat = -sys.maxint
-    frontier = [(Uhat, puzzle.initial_state, [], start_time)]
-    #States are composed of (utility, current state - tuple, parent path - list, t_instantiated)
-
-    expansion_count = 0
-    delay = 0
-    total_delay_time = 0
-    total_exp_time = 0
-    t_exp = 0
+    initial_distance = -sys.maxint
+    frontier = [(-sys.maxint, puzzle.initial_state,[])]
+    #States are composed of (cost, state, parent path)
     
     #goal state dictionary allows for quick lookup for Manhattan Dist Calc
     goal_state_dictionary = convert_to_tuples(puzzle.goal_state)
     
     stopnow = 0
     
+    goal_dictionary = convert_to_tuples(puzzle.goal_state)
+    
     while len(frontier) > 0 and stopnow < 300:
+        
+        #pop off element and check if goal. mark state as visited
         current = heapq.heappop(frontier)
-        if puzzle.goal_state == current[1]:
-            return current[2]
+        if puzzle.goal_state == current[index_state]:
+            current[index_parent_path].append(current[index_state])
+            return current[index_parent_path]
         closed.append(current)
-        if not expansion_count == 0:
-            delay  += total_delay_time / expansion_count
-        #calc exp time
-        t_exp_1 = time.time()
-        for state in puzzle.next_states(current[1]):
-            parent_path = current[2][:]
-            parent_path.append(current[1])
-            util = u(delay, t_exp, w_t, w_f, g, state, goal_state_dictionary)
-            child = (util, state, parent_path, time.time())
-            if child[1] is puzzle.goal_state:
-                heapq.heappush(frontier,child)
-            elif child in closed or child in frontier:
+    
+        #expand state using Manhattan Distance heuristic
+        for state in puzzle.next_states(current[index_state]):
+            parent_path = current[index_parent_path][:]
+            parent_path.append(current[index_state])
+            cost = len(parent_path) + man_dist(state, goal_dictionary)
+            child = (cost, state, parent_path)
+            if child in closed or child in frontier:
                 print 'child explored'
-            elif util < Uhat:
-                print 'util too small (' + str(util)+')'
             else:
-                expansion_count += 1
                 heapq.heappush(frontier, child)
-        total_exp_time+=time.time()-t_exp_1
-        t_exp = total_exp_time/expansion_count
-        frontier, Uhat = find_uhat(frontier, expansion_count, u, delay, t_exp, w_t, w_f, g, Uhat)
+                
         stopnow+=1
     return False
 
@@ -198,6 +193,6 @@ w_t = 9
 w_f = 9
 start_state = (0, 1, 2, 3, 5, 6, 7, 4, 9, 10, 11, 8, 13, 14, 15, 12)
 new_puz = Puzzle(start_state)
-new_puz = Puzzle(new_puz.goal_state)
+
 goal_state_dict = convert_to_tuples(new_puz.goal_state)
-print bugsy(new_puz, u, g, w_t, w_f)
+print a_star(new_puz)
