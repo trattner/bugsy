@@ -12,6 +12,7 @@ import time
 import heapq
 from math import log
 import sys
+import random
 
 class Puzzle:
     """
@@ -94,11 +95,14 @@ class Puzzle:
 
 #make a*
 
-def a_star(puzzle):
+def a_star(puzzle, steps):
 
     index_state = 1
     index_parent_path = 2
     index_cost = 0
+    index_birth_time = 3
+    
+    percent = 0
 
     closed = []
     initial_distance = -sys.maxint
@@ -112,7 +116,7 @@ def a_star(puzzle):
     
     goal_dictionary = convert_to_tuples(puzzle.goal_state)
     
-    while len(frontier) > 0 and stopnow < 300:
+    while len(frontier) > 0 and stopnow < steps:
         
         #pop off element and check if goal. mark state as visited
         current = heapq.heappop(frontier)
@@ -125,15 +129,17 @@ def a_star(puzzle):
         for state in puzzle.next_states(current[index_state]):
             parent_path = current[index_parent_path][:]
             parent_path.append(current[index_state])
-            cost = len(parent_path) + man_dist(state, goal_dictionary)
+            cost = len(parent_path) + man_dist(state, goal_dictionary) 
             child = (cost, state, parent_path)
             if child in closed or child in frontier:
                 print 'child explored'
             else:
                 heapq.heappush(frontier, child)
-                
+        if stopnow / (steps/100.) > percent:
+            print str(percent) + ' percent complete'
+            percent += 1
         stopnow+=1
-    return False
+    return 'search terminated due to timeout'
 
 def convert_to_tuples(state):
     output = {}
@@ -187,12 +193,27 @@ def find_uhat(frontier, count, u, delay, t_exp, w_t, w_f, g, Uhat):
     else:
         return (frontier, Uhat)
 
+def shuffle(n):
+    puzzle_initial = Puzzle((1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0))
+    out_state = puzzle_initial.goal_state
+    rand_ind = 0
+    for i in xrange(n):
+        next_states = puzzle_initial.next_states(out_state)
+        rand_ind = int(random.random()*len(next_states))
+        out_state = next_states[rand_ind]
+    return out_state
 
 #test cases
+times = []
 w_t = 9
 w_f = 9
-start_state = (0, 1, 2, 3, 5, 6, 7, 4, 9, 10, 11, 8, 13, 14, 15, 12)
-new_puz = Puzzle(start_state)
 
+#test case 1
+start_state = shuffle(80)
+print start_state
+new_puz = Puzzle(start_state)
 goal_state_dict = convert_to_tuples(new_puz.goal_state)
-print a_star(new_puz)
+start_time = time.time()
+print a_star(new_puz, 10**6)
+
+
