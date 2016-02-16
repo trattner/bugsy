@@ -214,8 +214,10 @@ def bugsy(puzzle, steps):
             parent_path.append(current[index_state])
             util = calculate_utility(len(parent_path), state, goal_state_dictionary, w_f, w_t, DELAY, T_EXP)
             child = (util, state, parent_path)
-            if child in closed or child in frontier:
-                print 'child explored'
+            if child in closed:
+                pass
+            elif child in frontier:
+                update_best(child, frontier, index_state, index_cost)
             else:
                 heapq.heappush(frontier, child)
         if stopnow / (steps/100.) > percent:
@@ -289,6 +291,12 @@ def shuffle(n):
         out_state = next_states[rand_ind]
     return out_state
 
+def update_best(state,frontier, index_state,  index_cost):
+    for front_state in frontier:
+        if front_state[index_state] == state[index_state]:
+            new_util = min(front_state[index_cost], state[index_cost])
+            if new_util == front_state[index_cost]:
+                state = front_state
 #test cases
 times = []
 w_t = 9
