@@ -96,7 +96,7 @@ class Puzzle:
 #make a*
 
 def a_star(puzzle, steps):
-
+    
     index_state = 1
     index_parent_path = 2
     index_cost = 0
@@ -135,11 +135,109 @@ def a_star(puzzle, steps):
                 print 'child explored'
             else:
                 heapq.heappush(frontier, child)
+
+        if stopnow / float(steps) * 100 > percent:
+            print str(percent) + ' percent complete'
+            percent += 1
+        stopnow+=1
+        
+    return_msg = 'search terminated due to timeout, length of frontier is: ' + str(len(frontier))
+    return return_msg
+    
+def bugsy(puzzle, steps):
+
+"""
+
+BUGSY(initial, U())
+1. open ← {initial}, closed ← {}
+2. n ← remove node from open with highest U(n) value
+3. if n is a goal, return it
+4. add n to closed
+5. for each of n’s children c,
+6. if c is not a goal and U(c) < 0, skip c
+7. if an old version of c is in closed,
+8. if c is better than cold,
+9. update cold and its children
+10. else, if an old version of c is in open,
+11. if c is better than cold,
+12. update cold
+13. else, add c to open
+14. go to step 2
+
+Utility = U_default - min(over children) { wf*cost + wt*time }
+-U_default is utility of returning empty solution
+-cost is length of parent path + manhattan distance
+-time is distance to end from current (manhattan) * delay * t_exp
+    where delay is number of extra expansions estimated in between useful progress
+    and t_exp is typical time to expand each node
+    -->these parameters can be updated in realtime or they may be calculated beforehand (training)
+
+U* = -(wf*cost + wt*nodes_on_s*t_exp)
+u* = U* or U*-wt*t_exp
+-->t_exp is time to perform expansion of node
+
+estimating Max Util:
+1. estimate cost of solution find beneath each node as f
+2. estimates number expansions required to find a solution beneath each node n, exp(n) -- can be dist heuristic d
+3. exp(n) = delay * d(n) since delay expansions expected on each of d's steps
+
+Bugsy can stop and return empty or expand a node. Each node in frontier is possible outcome, so max util based on open nodes:
+U_hat = max{ max(n in frontier){ -wf*f(n)+wt*d(n)*delay*t_exp }, U(empty,0)}
+
+once uhat is found, substitute for U* to estimate u*
+-->note that only expanding one node, so no need to estimate u* for all frontier nodes
+-->note that computing maximization each time is unnecessary since simply ordering on u(n) is sufficient
+
+UTILITY DETAILS:
+
+"""
+
+    index_state = 1
+    index_parent_path = 2
+    index_cost = 0
+    index_birth_time = 3
+    
+    percent = 0
+
+    closed = []
+    initial_util = -sys.maxint
+    frontier = [(initial_util, puzzle.initial_state,[])]
+    #States are composed of (utility, state, parent path)
+    
+    #goal state dictionary allows for quick lookup for Manhattan Dist Calc
+    goal_state_dictionary = convert_to_tuples(puzzle.goal_state)
+    
+    stopnow = 0
+    
+    goal_dictionary = convert_to_tuples(puzzle.goal_state)
+    
+    while len(frontier) > 0 and stopnow < steps:
+        
+        #pop off element and check if goal. mark state as visited
+        current = heapq.heappop(frontier)
+        if puzzle.goal_state == current[index_state]:
+            current[index_parent_path].append(current[index_state])
+            return current[index_parent_path]
+        closed.append(current)
+    
+        #expand state using Manhattan Distance heuristic
+        for state in puzzle.next_states(current[index_state]):
+            parent_path = current[index_parent_path][:]
+            parent_path.append(current[index_state])
+            cost = len(parent_path) + man_dist(state, goal_dictionary) 
+            u()            
+            child = (util, state, parent_path)
+            if child in closed or child in frontier:
+                print 'child explored'
+            else:
+                heapq.heappush(frontier, child)
         if stopnow / (steps/100.) > percent:
             print str(percent) + ' percent complete'
             percent += 1
         stopnow+=1
-    return 'search terminated due to timeout'
+        
+    return_msg = 'search terminated due to timeout, length of frontier is: ' + len(frontier)
+    return return_msg
 
 def convert_to_tuples(state):
     output = {}
@@ -209,11 +307,17 @@ w_t = 9
 w_f = 9
 
 #test case 1
-start_state = shuffle(60)
-print start_state
+start_state = (3, 7, 0, 4, 1, 6, 2, 8, 5, 10, 13, 12, 9, 14, 11, 15) #shuffle(60)
+# with time diff 0.546999931335
 new_puz = Puzzle(start_state)
 goal_state_dict = convert_to_tuples(new_puz.goal_state)
 start_time = time.time()
-print a_star(new_puz, 10**6)
+print a_star(new_puz, 10000)
+end_time = time.time()
+print end_time - start_time
+start_time = time.time()
+print bugsy(new_puz, 10000)
+end_time = time.time()
+print end_time - start_time
 
 
