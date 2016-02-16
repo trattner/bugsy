@@ -146,61 +146,51 @@ def a_star(puzzle, steps):
     
 def bugsy(puzzle, steps):
 
-"""
+    """
+    BUGSY(initial, U())
 
-BUGSY(initial, U())
-1. open ← {initial}, closed ← {}
-2. n ← remove node from open with highest U(n) value
-3. if n is a goal, return it
-4. add n to closed
-5. for each of n’s children c,
-6. if c is not a goal and U(c) < 0, skip c
-7. if an old version of c is in closed,
-8. if c is better than cold,
-9. update cold and its children
-10. else, if an old version of c is in open,
-11. if c is better than cold,
-12. update cold
-13. else, add c to open
-14. go to step 2
+    Utility = U_default - min(over children) { wf*cost + wt*time }
+    -U_default is utility of returning empty solution
+    -cost is length of parent path + manhattan distance
+    -time is distance to end from current (manhattan) * delay * t_exp
+        where delay is number of extra expansions estimated in between useful progress
+        and t_exp is typical time to expand each node
+        -->these parameters can be updated in realtime or they may be calculated beforehand (training)
+    
+    U* = -(wf*cost + wt*nodes_on_s*t_exp)
+    u* = U* or U*-wt*t_exp
+    -->t_exp is time to perform expansion of node
+    
+    estimating Max Util:
+    1. estimate cost of solution find beneath each node as f
+    2. estimates number expansions required to find a solution beneath each node n, exp(n) -- can be dist heuristic d
+    3. exp(n) = delay * d(n) since delay expansions expected on each of d's steps
+    
+    Bugsy can stop and return empty or expand a node. Each node in frontier is possible outcome, so max util based on open nodes:
+    U_hat = max{ max(n in frontier){ -wf*f(n)+wt*d(n)*delay*t_exp }, U(empty,0)}
+    
+    once uhat is found, substitute for U* to estimate u*
+    -->note that only expanding one node, so no need to estimate u* for all frontier nodes
+    -->note that computing maximization each time is unnecessary since simply ordering on u(n) is sufficient
+    
+    UTILITY DETAILS:
 
-Utility = U_default - min(over children) { wf*cost + wt*time }
--U_default is utility of returning empty solution
--cost is length of parent path + manhattan distance
--time is distance to end from current (manhattan) * delay * t_exp
-    where delay is number of extra expansions estimated in between useful progress
-    and t_exp is typical time to expand each node
-    -->these parameters can be updated in realtime or they may be calculated beforehand (training)
-
-U* = -(wf*cost + wt*nodes_on_s*t_exp)
-u* = U* or U*-wt*t_exp
--->t_exp is time to perform expansion of node
-
-estimating Max Util:
-1. estimate cost of solution find beneath each node as f
-2. estimates number expansions required to find a solution beneath each node n, exp(n) -- can be dist heuristic d
-3. exp(n) = delay * d(n) since delay expansions expected on each of d's steps
-
-Bugsy can stop and return empty or expand a node. Each node in frontier is possible outcome, so max util based on open nodes:
-U_hat = max{ max(n in frontier){ -wf*f(n)+wt*d(n)*delay*t_exp }, U(empty,0)}
-
-once uhat is found, substitute for U* to estimate u*
--->note that only expanding one node, so no need to estimate u* for all frontier nodes
--->note that computing maximization each time is unnecessary since simply ordering on u(n) is sufficient
-
-UTILITY DETAILS:
-
-"""
+    """
 
     index_state = 1
     index_parent_path = 2
     index_cost = 0
     index_birth_time = 3
     
+    DELAY = 1
+    T_EXP = 1    
+    w_f = 1
+    w_t = 1
+    
     percent = 0
 
     closed = []
-    initial_util = -sys.maxint
+    initial_util = sys.maxint
     frontier = [(initial_util, puzzle.initial_state,[])]
     #States are composed of (utility, state, parent path)
     
@@ -209,23 +199,20 @@ UTILITY DETAILS:
     
     stopnow = 0
     
-    goal_dictionary = convert_to_tuples(puzzle.goal_state)
-    
     while len(frontier) > 0 and stopnow < steps:
         
-        #pop off element and check if goal. mark state as visited
+        #pop off MIN element and check if goal. mark state as visited
         current = heapq.heappop(frontier)
         if puzzle.goal_state == current[index_state]:
             current[index_parent_path].append(current[index_state])
             return current[index_parent_path]
-        closed.append(current)
+        closed.append(current[index_state])
     
         #expand state using Manhattan Distance heuristic
         for state in puzzle.next_states(current[index_state]):
             parent_path = current[index_parent_path][:]
             parent_path.append(current[index_state])
-            cost = len(parent_path) + man_dist(state, goal_dictionary) 
-            u()            
+            util = calculate_utility(len(parent_path), state, goal_state_dictionary, w_f, w_t, DELAY, T_EXP)
             child = (util, state, parent_path)
             if child in closed or child in frontier:
                 print 'child explored'
@@ -247,6 +234,10 @@ def convert_to_tuples(state):
         output[state[i-1]] = (x, w)
     return output
 
+def calculate_utility(parent_path_length, state, goal_state_dictionary, w_f, w_t, delay, t_exp):
+    util = w_f * parent_path_length + w_t * man_dist(state, goal_state_dictionary) * delay * t_exp
+    return util
+
 def u(delay, t_exp, w_t, w_f, g, node, goal_state_dictionary):
     '''
     utility = something here ****
@@ -264,11 +255,8 @@ def u(delay, t_exp, w_t, w_f, g, node, goal_state_dictionary):
         -Loop and use the difference between the index of each number
         -in current state and the index of those same numbers in goal state
     '''
-    utility = -1 * (w_f * g(node) + w_t * man_dist(node ,goal_state_dictionary) * delay * t_exp)
+    utility =  (w_f * g(node) + w_t * man_dist(node ,goal_state_dictionary) * delay * t_exp)
     return utility
-
-def g(node):
-    return len(node)
 
 def man_dist(puzzle_state, goal_state_dict):
     dict_puzzle = convert_to_tuples(puzzle_state)
@@ -320,4 +308,4 @@ print bugsy(new_puz, 10000)
 end_time = time.time()
 print end_time - start_time
 
-
+#should test if child in closed and has better util now?
