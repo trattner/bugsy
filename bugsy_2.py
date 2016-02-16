@@ -210,16 +210,21 @@ def bugsy(puzzle, steps):
     
         #expand state using Manhattan Distance heuristic
         for state in puzzle.next_states(current[index_state]):
+            changed_frontier = False
             parent_path = current[index_parent_path][:]
             parent_path.append(current[index_state])
             util = calculate_utility(len(parent_path), state, goal_state_dictionary, w_f, w_t, DELAY, T_EXP)
             child = (util, state, parent_path)
-            if child in closed:
+            for state in frontier:
+                if child[index_state] == state[index_state]:
+                    frontier = update_best_state_frontier(child, frontier, index_state, index_cost)
+                    changed_frontier = True                    
+                    break
+            if child[index_state] in closed:
                 pass
-            elif child in frontier:
-                update_best(child, frontier, index_state, index_cost)
-            else:
+            elif not(changed_frontier):
                 heapq.heappush(frontier, child)
+                
         if stopnow / (steps/100.) > percent:
             print str(percent) + ' percent complete'
             percent += 1
@@ -237,28 +242,10 @@ def convert_to_tuples(state):
     return output
 
 def calculate_utility(parent_path_length, state, goal_state_dictionary, w_f, w_t, delay, t_exp):
-    util = w_f * parent_path_length + w_t * man_dist(state, goal_state_dictionary) * delay * t_exp
+    d = man_dist(state,goal_state_dictionary)    
+    util = w_f * (parent_path_length + d) + w_t * d * delay * t_exp
     return util
 
-def u(delay, t_exp, w_t, w_f, g, node, goal_state_dictionary):
-    '''
-    utility = something here ****
-    Involving w_t and w_f
-
-    ^
-    U = max { max( n in frontier) - (w_f *  f(n) + w_t * d(n) * delay * t_exp)}
-                                            ^
-    You expand the node that produces the   U value above
-
-    d(n) = Manhattan distance
-    f(n) = g*(n) + d(n)
-
-    Calculate d:
-        -Loop and use the difference between the index of each number
-        -in current state and the index of those same numbers in goal state
-    '''
-    utility =  (w_f * g(node) + w_t * man_dist(node ,goal_state_dictionary) * delay * t_exp)
-    return utility
 
 def man_dist(puzzle_state, goal_state_dict):
     dict_puzzle = convert_to_tuples(puzzle_state)
@@ -291,29 +278,35 @@ def shuffle(n):
         out_state = next_states[rand_ind]
     return out_state
 
-def update_best(state,frontier, index_state,  index_cost):
-    for front_state in frontier:
-        if front_state[index_state] == state[index_state]:
-            new_util = min(front_state[index_cost], state[index_cost])
-            if new_util == front_state[index_cost]:
-                state = front_state
+def update_best_state_frontier(state,frontier, index_state,  index_cost):
+    for i in range(len(frontier)):
+        if frontier[i][index_state] == state[index_state]:
+            if frontier[i][index_cost] > state[index_cost]:
+                frontier[i] = state
+    return frontier
+
 #test cases
 times = []
-w_t = 9
-w_f = 9
+
+#it works!!! .555 for A*, 0 for bugsy (3, 7, 0, 4, 1, 6, 2, 8, 5, 10, 13, 12, 9, 14, 11, 15)
+#(2, 6, 9, 4, 5, 10, 3, 0, 1, 14, 7, 8, 13, 15, 12, 11) A* times out, bugsy finds in .05 ms
 
 #test case 1
-start_state = (3, 7, 0, 4, 1, 6, 2, 8, 5, 10, 13, 12, 9, 14, 11, 15) #shuffle(60)
+start_state =shuffle(60)
 # with time diff 0.546999931335
 new_puz = Puzzle(start_state)
 goal_state_dict = convert_to_tuples(new_puz.goal_state)
+
+#do A*
 start_time = time.time()
 print a_star(new_puz, 10000)
 end_time = time.time()
-print end_time - start_time
+print 'A* takes: ' + str(end_time - start_time) + ' ms.'
+
+#bugsy
 start_time = time.time()
 print bugsy(new_puz, 10000)
 end_time = time.time()
-print end_time - start_time
+print 'bugsy takes: ' + str(end_time - start_time) + ' ms.'
 
 #should test if child in closed and has better util now?
