@@ -126,12 +126,13 @@ def bugsy(initialState, goalTest, actions, successor,
             if verbose:
                 print "agenda: ", agenda
             (util, _, n) = heappop(agenda)
-#            if n.state in expanded:
-#                if prevExpandF: prevExpandF(n)
-#                if verbose:
-#                    print  "previously expanded: ", n.cost, n.state
-#                    raw_input('okay?')
-#                continue
+            ######THIS SHOULDNT HAPPEN?#########
+            if n.state in expanded:
+                if prevExpandF: prevExpandF(n)
+                if verbose:
+                    print  "previously expanded: ", n.cost, n.state
+                    raw_input('okay?')
+                continue
             expanded.add(n.state)
             countExpanded += 1
 
