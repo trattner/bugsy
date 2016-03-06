@@ -292,10 +292,11 @@ times = []
 #(2, 6, 9, 4, 5, 10, 3, 0, 1, 14, 7, 8, 13, 15, 12, 11) A* times out, bugsy finds in .05 ms
 
 #test case 1
-#start_state =shuffle(60)
-start_state = (3, 7, 0, 4, 1, 6, 2, 8, 5, 10, 13, 12, 9, 14, 11, 15)
+start_state =shuffle(60)
 # with time diff 0.546999931335
 new_puz = Puzzle(start_state)
+#new_puz = Puzzle((3, 7, 0, 4, 1, 6, 2, 8, 5, 10, 13, 12, 9, 14, 11, 15))
+#new_puz = Puzzle((2, 6, 9, 4, 5, 10, 3, 0, 1, 14, 7, 8, 13, 15, 12, 11))
 goal_state_dict = convert_to_tuples(new_puz.goal_state)
 
 #do A*
