@@ -110,7 +110,7 @@ def a_star(puzzle, steps):
     #States are composed of (cost, state, parent path)
     
     #goal state dictionary allows for quick lookup for Manhattan Dist Calc
-    #goal_state_dictionary = convert_to_tuples(puzzle.goal_state)
+    goal_state_dictionary = convert_to_tuples(puzzle.goal_state)
     
     stopnow = 0
     
@@ -127,13 +127,19 @@ def a_star(puzzle, steps):
     
         #expand state using Manhattan Distance heuristic
         for state in puzzle.next_states(current[index_state]):
+            changed_frontier = False
             parent_path = current[index_parent_path][:]
             parent_path.append(current[index_state])
             cost = len(parent_path) + 3* man_dist(state, goal_dictionary) 
             child = (cost, state, parent_path)
-            if child in closed or child in frontier:
-                print 'child explored'
-            else:
+            for state in frontier:
+                if child[index_state] == state[index_state]:
+                    frontier = update_best_state_frontier(child, frontier, index_state, index_cost)
+                    changed_frontier = True                    
+                    break
+            if child[index_state] in closed:
+                pass
+            elif not(changed_frontier):
                 heapq.heappush(frontier, child)
 
         if stopnow / float(steps) * 100 > percent:
@@ -184,8 +190,8 @@ def bugsy(puzzle, steps):
     
     DELAY = 1
     T_EXP = 1    
-    w_f = 8
-    w_t = 8
+    w_f = 1
+    w_t = 1
     
     percent = 0
 
@@ -292,10 +298,7 @@ times = []
 #(2, 6, 9, 4, 5, 10, 3, 0, 1, 14, 7, 8, 13, 15, 12, 11) A* times out, bugsy finds in .05 ms
 
 #test case 1
-#start_state =shuffle(60)
-start_state = (3, 7, 0, 4, 1, 6, 2, 8, 5, 10, 13, 12, 9, 14, 11, 15)
-
-#start_state = (2, 6, 9, 4, 5, 10, 3, 0, 1, 14, 7, 8, 13, 15, 12, 11) #shuffle(60)
+start_state = (2, 6, 9, 4, 5, 10, 3, 0, 1, 14, 7, 8, 13, 15, 12, 11) #shuffle(60)
 # with time diff 0.546999931335
 new_puz = Puzzle(start_state)
 goal_state_dict = convert_to_tuples(new_puz.goal_state)
