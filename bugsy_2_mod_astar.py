@@ -105,8 +105,8 @@ def a_star(puzzle, steps):
     percent = 0
 
     closed = []
-    initial_distance = -sys.maxint
-    frontier = [(-sys.maxint, puzzle.initial_state,[])]
+    initial_distance = sys.maxint
+    frontier = [(sys.maxint, puzzle.initial_state,[])]
     #States are composed of (cost, state, parent path)
     
     #goal state dictionary allows for quick lookup for Manhattan Dist Calc
@@ -127,13 +127,19 @@ def a_star(puzzle, steps):
     
         #expand state using Manhattan Distance heuristic
         for state in puzzle.next_states(current[index_state]):
+            changed_frontier = False
             parent_path = current[index_parent_path][:]
             parent_path.append(current[index_state])
             cost = len(parent_path) + 3* man_dist(state, goal_dictionary) 
             child = (cost, state, parent_path)
-            if child in closed or child in frontier:
-                print 'child explored'
-            else:
+            for state in frontier:
+                if child[index_state] == state[index_state]:
+                    frontier = update_best_state_frontier(child, frontier, index_state, index_cost)
+                    changed_frontier = True                    
+                    break
+            if child[index_state] in closed:
+                pass
+            elif not(changed_frontier):
                 heapq.heappush(frontier, child)
 
         if stopnow / float(steps) * 100 > percent:
