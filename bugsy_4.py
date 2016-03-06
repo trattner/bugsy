@@ -14,7 +14,6 @@ Procedures and classes for BUGSY as described in
 https://www.jair.org/media/4047/live-4047-7225-jair.pdf 
 """
 
-
 class SearchNode:
     """A node in a search tree"""
     def __init__(self, action, state, parent, actionCost, heuristicCost = 0):
