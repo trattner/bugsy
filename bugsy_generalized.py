@@ -69,13 +69,13 @@ def bugsy(initialState, goalTest, actions, successor,
            visitF = None, expandF = None, hmax = float('inf'),
            prevExpandF = None, checkExpandF = None,
            multipleSuccessors = False,
-           greedy = 0.5,
            verbose = False, printFinal = True, maxHDelta = None,
            maxCost = float('inf'),
            fail = True,
            postFailScan = True,
            returnFirstGoal = False,
            w_f, w_t):
+               
         """
         @param initialState: root of the search
         @param goalTest: function from state to Boolean
@@ -84,6 +84,15 @@ def bugsy(initialState, goalTest, actions, successor,
         @param heuristic: function from state to estimated cost to reach a goal;
             defaults to a heuristic of 0, making this uniform cost search
         @param maxNodes: kill the search after it expands this many nodes
+        @param visitF: ?
+        @param expandF: ?
+        @param hmax: max heuristic val
+        @param prevExpandF: ?
+        @param checkExpandF: ?
+        @param multipleSuccessors: are there multiple successors of a state allowed?
+        @param verbose: print a bunch of things while running
+        @param printFinal: print final solution
+        @param         
         @returns: path from initial state to a goal state as a list of
                (action, state) tuples and a list of path costs from start to
                each state in the path
@@ -111,17 +120,18 @@ def bugsy(initialState, goalTest, actions, successor,
         count = 1
         countExpanded = 0
         heappush(agenda, (0, count, startNode))
+        #heap has cost, count = nodes visited, node class
         expanded = set([])
         while not agenda == [] and maxNodes > count:
             if verbose:
                 print "agenda: ", agenda
-            (hc, _, n) = heappop(agenda)
-            if n.state in expanded:
-                if prevExpandF: prevExpandF(n)
-                if verbose:
-                    print  "previously expanded: ", n.cost, n.state
-                    raw_input('okay?')
-                continue
+            (util, _, n) = heappop(agenda)
+#            if n.state in expanded:
+#                if prevExpandF: prevExpandF(n)
+#                if verbose:
+#                    print  "previously expanded: ", n.cost, n.state
+#                    raw_input('okay?')
+#                continue
             expanded.add(n.state)
             countExpanded += 1
 
@@ -208,7 +218,7 @@ def bugsy(initialState, goalTest, actions, successor,
 
         if postFailScan:
             while not agenda == []:
-                (hc, _, n) = heappop(agenda)
+                (util, _, n) = heappop(agenda)
                 if n.state in expanded: continue
                 if checkExpandF:        # check legality on demand
                     n = checkExpandF(n) # possibly modify the node or set to None
